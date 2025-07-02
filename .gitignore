@@ -41,7 +41,7 @@ Release/
 # android studio
 .gradle/
 .cxx/
-#build/
+build/
 **/main/assets/
 .externalNativeBuild/
 
