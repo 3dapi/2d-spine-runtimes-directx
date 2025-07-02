@@ -28,7 +28,7 @@ int MainApp::Init()
 	auto spineInst = make_unique<SceneSpine>();
 	if(spineInst)
 	{
-		if(SUCCEEDED(spineInst->Init()))
+		if(SUCCEEDED(spineInst->Init("assets/spine/raptor/raptor-pma.atlas", "assets/spine/raptor/raptor-pro.json")))
 		{
 			m_spine = std::move(spineInst);
 		}

@@ -1,5 +1,6 @@
 ﻿#pragma warning(disable: 4081 4267)
 
+#include <filesystem>
 #include <any>
 #include <Windows.h>
 #include <d3d11.h>
@@ -103,7 +104,7 @@ SceneSpine::~SceneSpine()
 	Destroy();
 }
 
-int SceneSpine::Init()
+int SceneSpine::Init(const std::string& str_atlas, const std::string& str_skel)
 {
 	HRESULT hr = S_OK;
 	auto d3dDevice  = std::any_cast<ID3D11Device*>(IG2GraphicsD3D::getInstance()->GetDevice());
@@ -215,20 +216,38 @@ int SceneSpine::Init()
 	if (FAILED(hr))
 		return hr;
 
-	InitSpine();
+	InitSpine(str_atlas, str_skel);
 
 	return S_OK;
 }
 
 int SceneSpine::Destroy()
 {
-	G2::SAFE_RELEASE(m_shaderVtx);
-	G2::SAFE_RELEASE(m_shaderPxl);
-	G2::SAFE_RELEASE(m_vtxLayout);
-	G2::SAFE_RELEASE(m_cnstMVP	);
 
-	G2::SAFE_RELEASE(m_spineTexture);
-	G2::SAFE_RELEASE(m_sampLinear);
+	if(!m_spineAnimations.empty())
+		m_spineAnimations.clear();
+
+	for(auto& [key, sqc] :  m_spineSequence)
+	{
+		delete sqc;
+	}
+	m_spineSequence.clear();
+	
+	G2::SAFE_DELETE(	m_spineSkeleton		);
+	G2::SAFE_DELETE(	m_spineAniState		);
+	G2::SAFE_DELETE(	m_spineSkeletonData	);
+	G2::SAFE_DELETE(	m_spineAtlas		);
+
+	G2::SAFE_RELEASE(	m_spineTexture		);
+	G2::SAFE_RELEASE(	m_sampLinear		);
+	G2::SAFE_RELEASE(	m_cnstMVP			);
+	G2::SAFE_RELEASE(	m_stateRater		);
+	G2::SAFE_RELEASE(	m_stateBlend		);
+	G2::SAFE_RELEASE(	m_stateDepthWrite	);
+	G2::SAFE_RELEASE(	m_shaderVtx			);
+	G2::SAFE_RELEASE(	m_shaderPxl			);
+	G2::SAFE_RELEASE(	m_vtxLayout			);
+
 	return S_OK;
 }
 
@@ -292,18 +311,22 @@ void SceneSpine::SetMVP(const XMMATRIX& tmMVP)
 	m_tmMVP = tmMVP;
 }
 
-
-void SceneSpine::InitSpine()
+void SceneSpine::InitSpine(const std::string& str_atlas, const std::string& str_skel)
 {
 	Bone::setYDown(false);
 
-	//m_spineAtlas = new Atlas("assets/spine/spineboy-pma/spineboy-pma.atlas", this);
-	//SkeletonBinary binary(m_spineAtlas);
-	//m_spineSkeletonData = binary.readSkeletonDataFile("assets/spine/spineboy-pma/spineboy-pro.skel");
-
-	m_spineAtlas = new Atlas("assets/spine/raptor/raptor-pma.atlas",this);
-	SkeletonJson binary(m_spineAtlas);
-	m_spineSkeletonData = binary.readSkeletonDataFile("assets/spine/raptor/raptor-pro.json");
+	std::filesystem::path str_path(str_skel);
+	m_spineAtlas = new Atlas(str_atlas.c_str(),this);
+	if(str_path.extension().generic_string().compare("json"))
+	{
+		SkeletonJson skl(m_spineAtlas);
+		m_spineSkeletonData = skl.readSkeletonDataFile(str_skel.c_str());
+	}
+	else
+	{
+		SkeletonBinary skl(m_spineAtlas);
+		m_spineSkeletonData = skl.readSkeletonDataFile(str_skel.c_str());
+	}
 
 	m_spineSkeleton = new Skeleton(m_spineSkeletonData);
 	m_spineSkeleton->setPosition(0.0F, -300.0F);

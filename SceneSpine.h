@@ -62,13 +62,13 @@ public:
 	SceneSpine();
 	virtual ~SceneSpine();
 
-	int		Init();
+	int		Init(const std::string& str_atlas, const std::string& str_skel);
 	int		Destroy();
 	int		Update(float deltaTime);
 	int		Render();
 	void	SetMVP(const XMMATRIX& tmMVP);
 protected:
-	void	InitSpine();
+	void	InitSpine(const std::string& str_atlas, const std::string& str_skel);
 	void	UpdateSpineSequence();
 	void	UpdateSpineBuffer();
 	void	SetupSpineSequence(int order, void* attachment, VtxSequenceSpine::ESPINE_ATTACHMENT_TYPE attachmentType);
